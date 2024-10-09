@@ -13,7 +13,12 @@ public class Mavenproject extends JFrame {
     private final Legislator[] legislators;
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Mavenproject().setVisible(true));
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new Mavenproject().setVisible(true);
+            }
+        });
     }
 
     public Mavenproject() {
@@ -30,7 +35,7 @@ public class Mavenproject extends JFrame {
         };
 
         String[] columnNames = {"Legislator", "Ayes", "Noes", "Absent", "NV", "Vacancy"};
-        var model = new DefaultTableModel(columnNames, 0);
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
 
         // Create rows with initial data
         for (Legislator legislator : legislators) {
@@ -44,7 +49,7 @@ public class Mavenproject extends JFrame {
             });
         }
 
-        var table = new JTable(model) {
+        JTable table = new JTable(model) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column >= 1 && column <= 5; // Only allow editing of radio buttons
@@ -68,7 +73,7 @@ public class Mavenproject extends JFrame {
         };
 
         table.setRowHeight(30);
-        var scrollPane = new JScrollPane(table);
+        JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane);
     }
 
@@ -94,15 +99,18 @@ public class Mavenproject extends JFrame {
             radioButton = new JRadioButton();
             radioButton.setSelected((Boolean) value);
 
-            // Add ActionListener using a lambda expression
-            radioButton.addActionListener(e -> {
-                // Deselect all other radio buttons in the same row
-                for (int col = 1; col <= 5; col++) {
-                    if (col != column) {
-                        table.getModel().setValueAt(false, row, col);
+            // Add ActionListener using an anonymous inner class
+            radioButton.addActionListener(new java.awt.event.ActionListener() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    // Deselect all other radio buttons in the same row
+                    for (int col = 1; col <= 5; col++) {
+                        if (col != column) {
+                            table.getModel().setValueAt(false, row, col);
+                        }
                     }
+                    fireEditingStopped(); // Notify that editing is done
                 }
-                fireEditingStopped(); // Notify that editing is done
             });
 
             return radioButton;
