@@ -1,0 +1,150 @@
+package com.example.mavenproject;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableCellEditor;
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Mavenproject extends JFrame {
+
+    private final Legislator[] legislators;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new Mavenproject().setVisible(true));
+    }
+
+    public Mavenproject() {
+        setTitle("Legislators Table");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Sample data
+        legislators = new Legislator[]{
+            new Legislator("1", "Alice"),
+            new Legislator("2", "Bob"),
+            new Legislator("3", "Charlie"),
+        };
+
+        String[] columnNames = {"Legislator", "Ayes", "Noes", "Absent", "NV", "Vacancy"};
+        var model = new DefaultTableModel(columnNames, 0);
+
+        // Create rows with initial data
+        for (Legislator legislator : legislators) {
+            model.addRow(new Object[]{
+                legislator.getName(),
+                false, // Ayes
+                false, // Noes
+                false, // Absent
+                false, // NV
+                false  // Vacancy
+            });
+        }
+
+        var table = new JTable(model) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column >= 1 && column <= 5; // Only allow editing of radio buttons
+            }
+
+            @Override
+            public TableCellRenderer getCellRenderer(int row, int column) {
+                if (column >= 1 && column <= 5) {
+                    return new RadioButtonRenderer();
+                }
+                return super.getCellRenderer(row, column);
+            }
+
+            @Override
+            public TableCellEditor getCellEditor(int row, int column) {
+                if (column >= 1 && column <= 5) {
+                    return new RadioButtonEditor();
+                }
+                return super.getCellEditor(row, column);
+            }
+        };
+
+        table.setRowHeight(30);
+        var scrollPane = new JScrollPane(table);
+        add(scrollPane);
+    }
+
+    // RadioButtonRenderer class
+    class RadioButtonRenderer extends JRadioButton implements TableCellRenderer {
+        public RadioButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setSelected((Boolean) value);
+            return this;
+        }
+    }
+
+    // RadioButtonEditor class
+    class RadioButtonEditor extends AbstractCellEditor implements TableCellEditor {
+        private JRadioButton radioButton;
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            radioButton = new JRadioButton();
+            radioButton.setSelected((Boolean) value);
+
+            // Add ActionListener using a lambda expression
+            radioButton.addActionListener(e -> {
+                // Deselect all other radio buttons in the same row
+                for (int col = 1; col <= 5; col++) {
+                    if (col != column) {
+                        table.getModel().setValueAt(false, row, col);
+                    }
+                }
+                fireEditingStopped(); // Notify that editing is done
+            });
+
+            return radioButton;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return radioButton.isSelected();
+        }
+    }
+
+    // Legislator class
+    class Legislator {
+        private final String id;
+        private final String name;
+        private final Map<String, String> statusMap;
+
+        public Legislator(String id, String name) {
+            this.id = id;
+            this.name = name;
+            this.statusMap = new HashMap<>();
+            resetStatus();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void resetStatus() {
+            statusMap.put("Ayes", "No");
+            statusMap.put("Noes", "No");
+            statusMap.put("Absent", "No");
+            statusMap.put("NV", "No");
+            statusMap.put("Vacancy", "No");
+        }
+
+        public String getStatus(String statusName) {
+            return statusMap.getOrDefault(statusName, "No");
+        }
+
+        public void setStatus(String statusName, String status) {
+            statusMap.put(statusName, status);
+        }
+    }
+}
